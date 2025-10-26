@@ -7,10 +7,10 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors({
-    origin : process.env.CORS_ORIGIN,//requests coming only from CORS_ORIGIN are going to be entertained.
-    credentials : true
-}))
+// app.use(cors({
+//     origin : process.env.CORS_ORIGIN,//requests coming only from CORS_ORIGIN are going to be entertained.
+//     credentials : true
+// }))
 
 //common middleware
 app.use(express.json({limit:"16kb"}));//Allows your server to understand JSON data sent in requests (like from APIs or frontend).The limit:"16kb" just means request body size cannot be larger than 16kb.
@@ -25,6 +25,9 @@ import paymentRoutes from "./routes/payment.routes.js"
 import profileRoutes from "./routes/profile.routes.js"
 
 //routes
+app.get('/', (req,res) => {
+
+})
 app.use("/api/v1/users",userRoutes)// "/home → renders a webpage./api/users → returns JSON with user data."Means these are API endpoints
 app.use("/api/v1/profile",profileRoutes)
 app.use("/api/v1/courses",courseRoutes)
