@@ -20,4 +20,5 @@ router.route("/get-enrolled-courses").get(verifyJwt, getEnrolledCourses)
 router.route("/get-user-details").get(verifyJwt, getUserDetails)
 router.route("/delete-profile").delete(verifyJwt, deleteAccount)
 
+
 export default router

@@ -13,7 +13,7 @@ from "../controllers/auth.controller.js";
 const router = Router();
 
 //user routes
-router.route("/signup").post(signUp);
+router.route("/signup").post(signUp);//passes the function as a reference to Express so it can call it later when a request arrives. Whenever a user hits this api endpoint, express automatically calls signup with (req,res,next) parameters.
 router.route("/login").post(loginUser);
 router.route("/sendOTP").post(sendOTP);
 
