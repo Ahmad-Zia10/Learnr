@@ -39,9 +39,6 @@ const courseSchema = new Schema({
         type : String
     },
     category : {
-        type : String
-    },
-    category : {
         type : Schema.Types.ObjectId,
         ref : "Category"
     },
@@ -50,7 +47,8 @@ const courseSchema = new Schema({
     },
     status : {
         type : String,
-        enum : ["Draft","Published"]
+        enum : ["Draft","Published"],
+        default : "Draft"
     },
     studentsEnrolled : [
         {

@@ -5,11 +5,12 @@ import mailSender from "../utils/mailSender.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import apiError from "../utils/apiError.js";
 import mongoose from "mongoose";
+import crypto from "crypto";
 import apiResponse from "../utils/apiResponse.js";
 
 const capturePayment = asyncHandler( async (req,res) => {
     //get details
-    const courseId = req.body;
+    const { courseId } = req.body;
     const userId = req.user._id
     //validate courseId
     if(!courseId) {
@@ -60,14 +61,15 @@ const capturePayment = asyncHandler( async (req,res) => {
         .status(200)
         .json(new apiResponse(200, response, "Order Created successfully for this course."))
     } catch (error) {
-        
+        console.log("Could not create Razorpay order", error.message);
+        throw new apiError(500, "Could not create payment order")
     }
 })
 
 const verifySignature = asyncHandler( async (req,res) => {
     const webhookSecret = "123456";
 
-    const signature = req.headers("x-razorpay-signature");
+    const signature = req.headers["x-razorpay-signature"];
 
     const shasum = crypto.createHmac("sha256",webhookSecret)
     shasum.update(JSON.stringify(req.body));
@@ -79,10 +81,10 @@ const verifySignature = asyncHandler( async (req,res) => {
     }
 
     //once payment is validated , now update course and user
-    const {courseId, userId} = req.body.payload.payment.entity.notice
+    const {courseId, userId} = req.body.payload.payment.entity.notes
 
     try {
-        const enrolledCourse = Course.findOneAndUpdate(
+        const enrolledCourse = await Course.findOneAndUpdate(
             {_id : courseId},
             {
                 $push : {
@@ -98,21 +100,23 @@ const verifySignature = asyncHandler( async (req,res) => {
         throw new apiError(400, "Course not Found")
     }
 
+    let enrolledStudent;
     try {
-        const enrolledStudent = await User.findByIdAndUpdate(
+        enrolledStudent = await User.findByIdAndUpdate(
             {_id : userId},
             {
                 $push : {
                     courses : courseId
                 }
-            }
+            },
+            {new:true}
         )
 
         console.log("Course Added to users course list",enrolledStudent);
-        
+
 
     } catch (error) {
-        console.log("Student could not be found",enrolledStudent);
+        console.log("Student could not be found", error.message);
         throw new apiError(400, "User not found")
     }
 

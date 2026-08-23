@@ -1,4 +1,4 @@
-export default courseEnrollmentEmail = (courseName, name) => {
+const courseEnrollmentEmail = (courseName, name) => {
     return `<!DOCTYPE html>
     <html>
     
@@ -85,3 +85,5 @@ export default courseEnrollmentEmail = (courseName, name) => {
     
     </html>`;
   };
+
+export default courseEnrollmentEmail;

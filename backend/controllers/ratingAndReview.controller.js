@@ -6,7 +6,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import apiResponse from "../utils/apiResponse.js";
 
 
-const createRatingAndReview = asyncHandler( async (req,res) => {x
+const createRatingAndReview = asyncHandler( async (req,res) => {
     //get details
     const {courseId, review, rating} = req.body;
 
@@ -20,8 +20,8 @@ const createRatingAndReview = asyncHandler( async (req,res) => {x
     const isEnrolled = await Course.aggregate([
         {
             $match : {
-                _id : courseId,
-                studentsEnrolled : new Schema.Types.ObjectId(user._id)
+                _id : new mongoose.Types.ObjectId(courseId),
+                studentsEnrolled : new mongoose.Types.ObjectId(user._id)
             }
         }
     ])
@@ -82,7 +82,7 @@ const getAverageRating = asyncHandler(async (req,res) => {
     const result = await RatingAndReview.aggregate([
         {
             $match : {
-                course : new Schema.Types.ObjectId(courseId)
+                course : new mongoose.Types.ObjectId(courseId)
             }
         },
         {
@@ -95,7 +95,7 @@ const getAverageRating = asyncHandler(async (req,res) => {
         }
     ]);
 
-    if(result.lenght === 0){
+    if(result.length === 0){
         console.log("No ratings found for this course");
     }
 
@@ -103,7 +103,7 @@ const getAverageRating = asyncHandler(async (req,res) => {
     .status(200)
     .json(new apiResponse(
         201,
-        {averageRating : result?.[0].averageRating},
+        {averageRating : result?.[0]?.averageRating ?? 0},
         "Average Rating fetched successfully"
     ))
 })
@@ -111,16 +111,16 @@ const getAverageRating = asyncHandler(async (req,res) => {
 const getAllRatings = asyncHandler(async (req,res) => {
     
     const allRatings = await RatingAndReview.find({})
-    .populate(
+    .populate([
         {
             path : "user",
             select : "firstName lastName image email"
         },
         {
             path : "course",
-            select : "courseName"   
+            select : "courseName"
         }
-    );
+    ]);
 
     if(allRatings?.length === 0){
         console.log("No ratings found")

@@ -113,7 +113,7 @@ const updateSubSection = asyncHandler(async (req,res) => {
     
     if(title) subSection.title = title;
     if(description) subSection.description = description;
-    if(newVideo) subSection.timeDuration = timeDuration;
+    if(timeDuration) subSection.timeDuration = timeDuration;
     if(newVideo) subSection.video = newVideo.secure_url;
     if(newVideo) subSection.videoId = newVideo.public_id;
 
@@ -121,7 +121,7 @@ const updateSubSection = asyncHandler(async (req,res) => {
 
     return res
     .status(200)
-    .json(new apiResponse(200, updateSubSection,"Sub Section Updated successfully"));
+    .json(new apiResponse(200, subSection,"Sub Section Updated successfully"));
 
 
 })

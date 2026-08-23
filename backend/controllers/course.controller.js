@@ -100,7 +100,7 @@ const getAllCourses = asyncHandler(async (req, res) => {
 
     return res
     .status(200)
-    .json(200,allCourses, "All Courses fetched succesfully");
+    .json(new apiResponse(200, allCourses, "All Courses fetched succesfully"));
 })
 
 //get specific course by course Id
@@ -114,7 +114,7 @@ const getCourse = asyncHandler( async (req,res) => {
 
     const courseDetails = await Course.findById({_id:courseId}).select("-studentsEnrolled").populate([
             {
-                path : "instructer",
+                path : "instructor",
                 populate : {
                     path : "additionalDetails"
                 }

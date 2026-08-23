@@ -1,6 +1,9 @@
 backend/node_modules/
 backend/.env
-backend/public/
+backend/public/*
+!backend/public/temp/
+backend/public/temp/*
+!backend/public/temp/.gitkeep
 
 frontend/node_modules/
 frontend/.env

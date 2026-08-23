@@ -70,6 +70,7 @@ const categoryPageDetails = asyncHandler(async (req,res) => {
         .status(200)
         .json(new apiResponse(
             200,
+            { selectedCourses : [], differentCourses : [], mostSellingCourses : [] },
             "No courses found with this category"
         ))
     }
@@ -90,7 +91,7 @@ const categoryPageDetails = asyncHandler(async (req,res) => {
             return element.courses;
     }).flat(1);
 
-    if(differentCourses.lenght === 0) {
+    if(differentCourses.length === 0) {
         console.log("No other categories found");
     }
     
@@ -107,9 +108,12 @@ const categoryPageDetails = asyncHandler(async (req,res) => {
     .status(200)
     .json(new apiResponse(
         200,
-        selectedCourses,
-        differentCourses,
-        mostSellingCourses,
+        {
+            selectedCourses,
+            differentCourses,
+            mostSellingCourses,
+        },
+        "Category page details fetched successfully"
     ))
 })
 

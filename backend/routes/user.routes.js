@@ -19,7 +19,7 @@ router.route("/sendOTP").post(sendOTP);
 
 
 //secure routes
-router.route("changePassword").post(verifyJwt,changePassword);
+router.route("/changePassword").post(verifyJwt,changePassword);
 
 //reset password
 import { resetPasswordToken, resetPassword } from "../controllers/resetPassword.controller.js"

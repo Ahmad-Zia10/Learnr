@@ -26,7 +26,7 @@ import profileRoutes from "./routes/profile.routes.js"
 
 //routes
 app.get('/', (req,res) => {
-
+    res.status(200).json({ status: "ok", message: "StudyNotion API is running" })
 })
 app.use("/api/v1/users",userRoutes)// "/home → renders a webpage./api/users → returns JSON with user data."Means these are API endpoints
 app.use("/api/v1/profile",profileRoutes)
