@@ -50,8 +50,8 @@ const showAllCategories = asyncHandler( async (req,res) => {
 })
 
 const categoryPageDetails = asyncHandler(async (req,res) => {
-    //get details
-    const {categoryId} = req.body;
+    //GET requests carry no body, so the id arrives as a query param
+    const categoryId = req.query.categoryId || req.body?.categoryId;
 
     //validate 
     if(!categoryId) {

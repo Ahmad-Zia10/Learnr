@@ -105,7 +105,8 @@ const getAllCourses = asyncHandler(async (req, res) => {
 
 //get specific course by course Id
 const getCourse = asyncHandler( async (req,res) => {
-    const {courseId} = req.body;
+    //GET requests carry no body, so the id arrives as a query param
+    const courseId = req.query.courseId || req.body?.courseId;
 
     //validate
     if(!courseId){
