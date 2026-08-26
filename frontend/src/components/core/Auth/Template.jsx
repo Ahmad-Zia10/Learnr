@@ -1,5 +1,6 @@
 import { useState } from "react"
 import LoginForm from "./LoginForm"
+import SignupForm from "./SignupForm"
 import Tab from "./Tab"
 
 const ACCOUNT_TABS = [
@@ -28,7 +29,11 @@ function Template({ title, description1, description2, image, formType }) {
           <Tab tabs={ACCOUNT_TABS} value={accountType} onChange={setAccountType} />
         </div>
 
-        {formType === "signup" ? null : <LoginForm />}
+        {formType === "signup" ? (
+          <SignupForm accountType={accountType} />
+        ) : (
+          <LoginForm />
+        )}
       </div>
 
       <div className="relative mx-auto w-11/12 max-w-[450px] md:mx-0">
