@@ -18,12 +18,22 @@ export const paymentApi = createApi({
 
   endpoints: (builder) => ({
 
-    //Creates one Razorpay order for a single course.
+    //Creates a single Razorpay order covering every course in the cart.
     capturePayment: builder.mutation({
-      query: (courseId) => ({
+      query: (courseIds) => ({
         url: "capture-payment",
         method: "POST",
-        body: { courseId },
+        body: { courseIds },
+      }),
+      transformResponse: (response) => response?.data ?? null,
+    }),
+
+    //Confirms the payment server-side, which is what actually enrols the student.
+    verifyPayment: builder.mutation({
+      query: (payment) => ({
+        url: "verify-payment",
+        method: "POST",
+        body: payment,
       }),
       transformResponse: (response) => response?.data ?? null,
     }),
@@ -31,4 +41,7 @@ export const paymentApi = createApi({
   }),
 });
 
-export const { useCapturePaymentMutation } = paymentApi;
+export const {
+  useCapturePaymentMutation,
+  useVerifyPaymentMutation,
+} = paymentApi;

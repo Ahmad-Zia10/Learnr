@@ -2,7 +2,10 @@ import { useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Link, useNavigate } from "react-router-dom"
 import RatingStars from "../components/common/RatingStars"
-import { useCapturePaymentMutation } from "../services/paymentApi"
+import {
+  useCapturePaymentMutation,
+  useVerifyPaymentMutation,
+} from "../services/paymentApi"
 import { resetCart } from "../store/cartSlice"
 import { loadRazorpayScript } from "../utils/razorpay"
 
@@ -18,6 +21,7 @@ function Checkout() {
   const { user } = useSelector((state) => state.profile)
 
   const [capturePayment, { isLoading }] = useCapturePaymentMutation()
+  const [verifyPayment, { isLoading: isVerifying }] = useVerifyPaymentMutation()
 
   const [formData, setFormData] = useState({
     fullName: user ? `${user.firstName} ${user.lastName}` : "",
@@ -40,33 +44,49 @@ function Checkout() {
     }
 
     try {
-      //the backend creates one order per course
-      for (const course of items) {
-        const order = await capturePayment(course._id).unwrap()
-        if (!order?.order_id) continue
+      //One order for the whole cart, priced by the server.
+      const order = await capturePayment(items.map((item) => item._id)).unwrap()
 
-        await new Promise((resolve) => {
-          const checkout = new window.Razorpay({
-            key: import.meta.env.VITE_RAZORPAY_KEY,
-            order_id: order.order_id,
-            amount: order.amount,
-            currency: order.currency,
-            name: "StudyNotion",
-            description: order.courseName,
-            image: order.thumbnail,
-            prefill: {
-              name: formData.fullName,
-              email: formData.email,
-            },
-            handler: resolve,
-            modal: { ondismiss: resolve },
-          })
-          checkout.open()
-        })
+      if (!order?.order_id) {
+        setError("Could not start the payment. Please try again.")
+        return
       }
 
-      dispatch(resetCart())
-      navigate("/dashboard/enrolled-courses")
+      const checkout = new window.Razorpay({
+        key: import.meta.env.VITE_RAZORPAY_KEY,
+        order_id: order.order_id,
+        amount: order.amount,
+        currency: order.currency,
+        name: "StudyNotion",
+        description: `${totalItems} course${totalItems === 1 ? "" : "s"}`,
+        prefill: {
+          name: formData.fullName,
+          email: formData.email,
+        },
+        //Enrolment only happens once the server has verified the signature.
+        handler: async (response) => {
+          try {
+            await verifyPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }).unwrap()
+
+            dispatch(resetCart())
+            navigate("/dashboard/enrolled-courses")
+          } catch (err) {
+            setError(
+              err?.data?.message ||
+                "We took your payment but could not confirm it. Please contact support."
+            )
+          }
+        },
+        modal: {
+          ondismiss: () => setError("Payment was cancelled."),
+        },
+      })
+
+      checkout.open()
     } catch (err) {
       setError(err?.data?.message || "Payment could not be started.")
     }
@@ -182,11 +202,15 @@ function Checkout() {
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isVerifying}
             className="mt-5 w-full cursor-pointer rounded-md bg-yellow-50 py-[10px] font-medium text-richblack-900
             disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isLoading ? "Starting payment..." : `Pay Rs. ${total}`}
+            {isLoading
+              ? "Starting payment..."
+              : isVerifying
+                ? "Confirming..."
+                : `Pay Rs. ${total}`}
           </button>
         </form>
       </div>
