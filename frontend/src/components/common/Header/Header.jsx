@@ -1,15 +1,12 @@
-import React, {useState} from 'react'
+import React from 'react'
 import { NavLink, Link, Links } from 'react-router-dom'
 import logo from '../../../assets/Logo/Logo-Full-Light.png'
 import {NavbarLinks} from '../../../data/navbar-links.js'
 import { useSelector } from 'react-redux'
 import { IoSearchSharp } from "react-icons/io5";
 import { BsCart3 } from "react-icons/bs";
-import { apiConnector } from '../../../services/apiConnector.js'
-import { courseEndpoints } from '../../../services/apis.js'
-import { useEffect } from 'react'
 import { RiArrowDropDownLine } from "react-icons/ri";
-import axios from 'axios'
+import { useGetCategoriesQuery } from '../../../services/courseApi.js'
 
 function Header() {
 
@@ -17,35 +14,7 @@ function Header() {
   const {user} = useSelector( (state) => state.profile );
   const {totalItems} = useSelector( (state) => state.cart );
 
-  const [categories, setCategories] = useState([]);
-
-  const fetchCategories = async () => { 
-
-  try {
-    const result = await apiConnector("GET", courseEndpoints.COURSE_CATEGORIES_API);
-    console.log("Axios full response:", result.data); // Logs full object
-    console.log("Categories:", result.data.data);    // Logs just the array
-    setCategories(result.data.data);                 // Set only the array
-  } catch (error) {
-    console.log("Error while fetching categories", error.message);
-  }
-
-
-    // try {
-    // const response = await fetch('/api/v1/courses/show-all-categories')
-    // const data = response.json();
-
-    // console.log("Categories data fetched successfully", data)
-    // } catch (error) {
-    //   console.log("Error while fetching caegories", error.message);
-    // }
-
-  }
-
-  useEffect(() => {
-    fetchCategories();
-  }
-  ,[])
+  const { data: categories = [] } = useGetCategoriesQuery();
 
 
   return (
@@ -81,7 +50,7 @@ function Header() {
                         {
                           categories.length ? categories.map((category) => {
                             return (
-                              <Link to={category.name} key={category._id}>
+                              <Link to={`/catalog/${category.name}`} key={category._id}>
                                 {category.name}
                               </Link>
                             )
