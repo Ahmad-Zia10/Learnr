@@ -8,6 +8,8 @@ import Home from './pages/Home.jsx'
 import Login from './pages/Login.jsx'
 import Signup from './pages/Signup.jsx'
 import VerifyEmail from './pages/VerifyEmail.jsx'
+import ForgotPassword from './pages/ForgotPassword.jsx'
+import UpdatePassword from './pages/UpdatePassword.jsx'
 import { Provider } from 'react-redux'
 
 
@@ -18,6 +20,8 @@ const router  = createBrowserRouter(
       <Route path='/login' element = {<Login/>}/>
       <Route path='/signup' element = {<Signup/>}/>
       <Route path='/verify-email' element = {<VerifyEmail/>}/>
+      <Route path='/forgot-password' element = {<ForgotPassword/>}/>
+      <Route path='/update-password/:token' element = {<UpdatePassword/>}/>
     </Route>
   )
 )
