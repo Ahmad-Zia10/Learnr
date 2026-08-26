@@ -12,6 +12,9 @@ import ForgotPassword from './pages/ForgotPassword.jsx'
 import UpdatePassword from './pages/UpdatePassword.jsx'
 import Catalog from './pages/Catalog.jsx'
 import CourseDetails from './pages/CourseDetails.jsx'
+import Dashboard from './pages/Dashboard.jsx'
+import Cart from './pages/Cart.jsx'
+import Checkout from './pages/Checkout.jsx'
 import { Provider } from 'react-redux'
 
 
@@ -26,6 +29,10 @@ const router  = createBrowserRouter(
       <Route path='/update-password/:token' element = {<UpdatePassword/>}/>
       <Route path='/catalog/:catalogName' element = {<Catalog/>}/>
       <Route path='/courses/:courseId' element = {<CourseDetails/>}/>
+      <Route path='/dashboard' element = {<Dashboard/>}>
+        <Route path='cart' element = {<Cart/>}/>
+        <Route path='checkout' element = {<Checkout/>}/>
+      </Route>
     </Route>
   )
 )

@@ -1,10 +1,12 @@
 import { useMemo } from "react"
-import { Link, useParams } from "react-router-dom"
+import { useDispatch, useSelector } from "react-redux"
+import { Link, useNavigate, useParams } from "react-router-dom"
 import { HiOutlineGlobeAlt } from "react-icons/hi"
 import { BiInfoCircle } from "react-icons/bi"
 import CourseAccordion from "../components/core/Catalog/CourseAccordion"
 import RatingStars from "../components/common/RatingStars"
 import { useGetCourseQuery } from "../services/courseApi"
+import { addToCart } from "../store/cartSlice"
 
 const COURSE_INCLUDES = [
   "8 hours on-demand video",
@@ -15,7 +17,34 @@ const COURSE_INCLUDES = [
 
 function CourseDetails() {
   const { courseId } = useParams()
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
   const { data: course, isFetching, isError } = useGetCourseQuery(courseId)
+
+  const { token } = useSelector((state) => state.auth)
+  const { items } = useSelector((state) => state.cart)
+  const inCart = items.some((item) => item._id === courseId)
+
+  //Buying requires an account, so send signed-out visitors to log in first.
+  const handleAddToCart = () => {
+    if (!token) return navigate("/login")
+    dispatch(
+      addToCart({
+        _id: course._id,
+        courseName: course.courseName,
+        thumbnail: course.thumbnail,
+        price: course.price,
+        instructor: course.instructor,
+        ratingAndReviews: course.ratingAndReviews,
+      })
+    )
+  }
+
+  const handleBuyNow = () => {
+    if (!token) return navigate("/login")
+    handleAddToCart()
+    navigate("/dashboard/cart")
+  }
 
   const reviews = useMemo(() => course?.ratingAndReviews ?? [], [course])
 
@@ -109,12 +138,14 @@ function CourseDetails() {
 
             <button
               type="button"
+              onClick={inCart ? () => navigate("/dashboard/cart") : handleAddToCart}
               className="mt-4 w-full cursor-pointer rounded-md bg-yellow-50 py-[10px] font-medium text-richblack-900"
             >
-              Add to Cart
+              {inCart ? "Go to Cart" : "Add to Cart"}
             </button>
             <button
               type="button"
+              onClick={handleBuyNow}
               className="mt-3 w-full cursor-pointer rounded-md bg-richblack-800 py-[10px] font-medium text-richblack-5"
             >
               Buy now
