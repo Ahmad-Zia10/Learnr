@@ -1,15 +1,10 @@
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { Link } from "react-router-dom"
+import { HiOutlineDotsVertical } from "react-icons/hi"
 import { useGetEnrolledCoursesQuery } from "../services/profileApi"
+import { useMarkCourseCompleteMutation } from "../services/courseApi"
 
 const FILTERS = ["All", "Pending", "Completed"]
-
-//Total lectures across a course's sections.
-const lectureCount = (course) =>
-  (course.courseContent ?? []).reduce(
-    (total, section) => total + (section.subSection?.length ?? 0),
-    0
-  )
 
 function ProgressBar({ value }) {
   return (
@@ -26,22 +21,25 @@ function ProgressBar({ value }) {
 
 function EnrolledCourses() {
   const [filter, setFilter] = useState("All")
-  const { data: courses = [], isFetching } = useGetEnrolledCoursesQuery()
+  const { data: courses = [], isFetching, refetch } = useGetEnrolledCoursesQuery()
+  const [markCourseComplete] = useMarkCourseCompleteMutation()
+  const [openMenu, setOpenMenu] = useState(null)
 
-  //The backend does not report progress yet, so treat every course as not
-  //started until a course-progress endpoint exists.
-  const withProgress = useMemo(
-    () =>
-      courses.map((course) => ({
-        ...course,
-        progress: course.progressPercentage ?? 0,
-      })),
-    [courses]
-  )
+  const handleMarkComplete = async (courseId) => {
+    setOpenMenu(null)
+    try {
+      await markCourseComplete(courseId).unwrap()
+      //the percentage is computed by the enrolled-courses endpoint
+      refetch()
+    } catch {
+      //surfaced by the row staying where it is; nothing destructive happened
+    }
+  }
 
-  const visible = withProgress.filter((course) => {
-    if (filter === "Completed") return course.progress >= 100
-    if (filter === "Pending") return course.progress < 100
+  const visible = courses.filter((course) => {
+    const progress = course.progressPercentage ?? 0
+    if (filter === "Completed") return progress >= 100
+    if (filter === "Pending") return progress < 100
     return true
   })
 
@@ -85,8 +83,9 @@ function EnrolledCourses() {
         <div className="mt-8 overflow-hidden rounded-md border border-richblack-700">
           <div className="flex items-center gap-x-4 bg-richblack-700 px-6 py-3 text-[0.875rem] text-richblack-50">
             <p className="flex-1">Course Name</p>
-            <p className="w-[130px]">Duration</p>
-            <p className="w-[240px]">Progress</p>
+            <p className="w-[130px]">Lectures</p>
+            <p className="w-[210px]">Progress</p>
+            <p className="w-[26px]" />
           </div>
 
           {visible.map((course) => (
@@ -105,24 +104,52 @@ function EnrolledCourses() {
                 />
                 <div>
                   <p className="text-[1rem] font-medium">{course.courseName}</p>
-                  <p className="mt-1 text-[0.813rem] text-richblack-300">
-                    {lectureCount(course)} lecture
-                    {lectureCount(course) === 1 ? "" : "s"}
+                  <p className="mt-1 line-clamp-1 text-[0.813rem] text-richblack-300">
+                    {course.courseDescription}
                   </p>
                 </div>
               </Link>
 
               <p className="w-[130px] text-[0.875rem] text-richblack-100">
-                {course.totalDuration ?? "—"}
+                {course.completedLectures ?? 0}/{course.totalLectures ?? 0}{" "}
+                lectures
               </p>
 
-              <div className="w-[240px]">
+              <div className="w-[210px]">
                 <p className="text-[0.813rem] text-richblack-100">
-                  {course.progress >= 100
+                  {(course.progressPercentage ?? 0) >= 100
                     ? "Completed"
-                    : `Progress ${course.progress}%`}
+                    : `Progress ${course.progressPercentage ?? 0}%`}
                 </p>
-                <ProgressBar value={course.progress} />
+                <ProgressBar value={course.progressPercentage ?? 0} />
+              </div>
+
+              {/* Row actions */}
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-label="Course actions"
+                  onClick={() =>
+                    setOpenMenu(openMenu === course._id ? null : course._id)
+                  }
+                  className="cursor-pointer p-1 text-richblack-100"
+                >
+                  <HiOutlineDotsVertical size={18} />
+                </button>
+
+                {openMenu === course._id && (
+                  <div className="absolute right-0 z-10 mt-1 w-[210px] overflow-hidden rounded-md border border-richblack-600 bg-richblack-700">
+                    <button
+                      type="button"
+                      onClick={() => handleMarkComplete(course._id)}
+                      disabled={(course.progressPercentage ?? 0) >= 100}
+                      className="w-full cursor-pointer px-4 py-3 text-left text-[0.875rem] text-richblack-5
+                      disabled:cursor-not-allowed disabled:text-richblack-400"
+                    >
+                      Mark as Completed
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}

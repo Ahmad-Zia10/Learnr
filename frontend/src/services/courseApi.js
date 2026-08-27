@@ -4,10 +4,16 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 export const courseApi = createApi({
   reducerPath: "courseApi",
+  tagTypes: ["CourseProgress"],
 
   baseQuery: fetchBaseQuery({
     baseUrl: "/api/v1/courses/",
     credentials: "include",
+    prepareHeaders: (headers, { getState }) => {
+      const token = getState()?.auth?.token;
+      if (token) headers.set("Authorization", `Bearer ${token}`);
+      return headers;
+    },
   }),
 
   endpoints: (builder) => ({
@@ -36,6 +42,42 @@ export const courseApi = createApi({
       transformResponse: (response) => response?.data ?? null,
     }),
 
+    getCourseProgress: builder.query({
+      query: (courseId) => ({
+        url: "get-course-progress",
+        params: { courseId },
+      }),
+      transformResponse: (response) => response?.data?.completedVideos ?? [],
+      providesTags: ["CourseProgress"],
+    }),
+
+    markLectureComplete: builder.mutation({
+      query: (body) => ({
+        url: "update-course-progress",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["CourseProgress"],
+    }),
+
+    markLectureIncomplete: builder.mutation({
+      query: (body) => ({
+        url: "mark-lecture-incomplete",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["CourseProgress"],
+    }),
+
+    markCourseComplete: builder.mutation({
+      query: (courseId) => ({
+        url: "mark-course-complete",
+        method: "POST",
+        body: { courseId },
+      }),
+      invalidatesTags: ["CourseProgress"],
+    }),
+
     getAllCourses: builder.query({
       query: () => "get-all-courses",
       transformResponse: (response) => response?.data ?? [],
@@ -45,6 +87,10 @@ export const courseApi = createApi({
 });
 
 export const {
+  useGetCourseProgressQuery,
+  useMarkLectureCompleteMutation,
+  useMarkLectureIncompleteMutation,
+  useMarkCourseCompleteMutation,
   useGetCategoriesQuery,
   useGetCategoryPageDetailsQuery,
   useGetCourseQuery,
