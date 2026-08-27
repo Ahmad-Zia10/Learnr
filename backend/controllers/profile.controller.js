@@ -83,11 +83,12 @@ const deleteAccount = asyncHandler(async (req, res) => {
     }
 
     //delete course progress
-    // try {
-    //     const updateCourseProgress = await CourseProgess.updateMany()
-    // } catch (error) {
-        
-    // }
+    try {
+        await CourseProgess.deleteMany({ userId : user._id });
+    } catch (error) {
+        console.log("Course progress could not be deleted", error.message);
+        throw new apiError(500, "Failed to delete course progress")
+    }
     
 
     //delete user 
@@ -131,23 +132,57 @@ const getEnrolledCourses = asyncHandler(async (req,res) => {
         throw new apiError(401, "Unathouraized Request")
     }
 
-    const userDetails = await User.findById({_id : userId}).populate("courses");
+    //courseContent is needed to count the lectures each course contains
+    const userDetails = await User.findById({_id : userId}).populate({
+        path : "courses",
+        populate : {
+            path : "courseContent",
+            populate : { path : "subSection", select : "_id timeDuration" }
+        }
+    });
 
     if(!userDetails) {
         throw new apiError(400, "User does not exists")
     }
 
-    const courseEnrolled = userDetails.courses;
+    const courseEnrolled = userDetails.courses ?? [];
 
-    if(!courseEnrolled) {
-        throw new apiError(404, "Courses Enrolled not found")
-    }
+    //one lookup for every course, rather than one query per course
+    const progressDocs = await CourseProgess.find({
+        userId,
+        courseID : { $in : courseEnrolled.map((course) => course._id) }
+    });
+
+    const completedByCourse = new Map(
+        progressDocs.map((doc) => [String(doc.courseID), doc.completedVideos.length])
+    );
+
+    const coursesWithProgress = courseEnrolled.map((course) => {
+        const totalLectures = (course.courseContent ?? []).reduce(
+            (total, section) => total + (section.subSection?.length ?? 0),
+            0
+        );
+
+        const completed = completedByCourse.get(String(course._id)) ?? 0;
+
+        //a course with no lectures yet is 0% rather than a division by zero
+        const progressPercentage = totalLectures
+            ? Math.round((completed / totalLectures) * 100)
+            : 0;
+
+        return {
+            ...course.toObject(),
+            totalLectures,
+            completedLectures : completed,
+            progressPercentage
+        };
+    });
 
     return res
     .status(200)
     .json(new apiResponse(
         200,
-        courseEnrolled,
+        coursesWithProgress,
         "Courses enrolled fetched successfully"
     ))
 

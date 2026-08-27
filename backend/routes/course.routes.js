@@ -67,6 +67,21 @@ router.route("/update-subSection").patch(verifyJwt, isInstructor, upload.fields(
 router.route("/delete-subSection").post(verifyJwt, isInstructor, deleteSubSection);
 
 
+//import course progress handler functions
+import {
+    markLectureComplete,
+    markLectureIncomplete,
+    markCourseComplete,
+    getCourseProgress
+}
+from "../controllers/courseProgress.controller.js";
+
+//Course Progress Routes
+router.route("/update-course-progress").post(verifyJwt, isStudent, markLectureComplete);
+router.route("/mark-lecture-incomplete").post(verifyJwt, isStudent, markLectureIncomplete);
+router.route("/mark-course-complete").post(verifyJwt, isStudent, markCourseComplete);
+router.route("/get-course-progress").get(verifyJwt, isStudent, getCourseProgress);
+
 //import rating and reviews handler functions
 import { 
     createRatingAndReview,
