@@ -13,7 +13,8 @@ from "../middleware/auth.js";
 import {
     createCourse,
     getAllCourses,
-    getCourse
+    getCourse,
+    getFullCourseDetails
 } 
 from "../controllers/course.controller.js";
 
@@ -24,6 +25,7 @@ router.route("/get-all-courses").get(getAllCourses);
 router.route("/get-course").get(getCourse);
 
 //secure course routes
+router.route("/get-full-course-details").get(verifyJwt, getFullCourseDetails);
 router.route("/create-course").post(verifyJwt, isInstructor, upload.fields([{ name: "thumbnailImage", maxCount: 1 }]), createCourse);
 
 

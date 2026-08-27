@@ -5,6 +5,7 @@ import apiError from "../utils/apiError.js";
 import apiResponse from "../utils/apiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
+import { CourseProgess } from "../models/courseProgess.model.js";
 
 
 //createCourse
@@ -122,8 +123,10 @@ const getCourse = asyncHandler( async (req,res) => {
             },
             {
                 path : "courseContent",
+                //this endpoint is public, so never expose the video URLs here
                 populate : {
-                    path : "subSection"
+                    path : "subSection",
+                    select : "-video -videoId"
                 }
             },
             {
@@ -150,8 +153,61 @@ const getCourse = asyncHandler( async (req,res) => {
 
 })
 
+//Full course content, including video URLs. Only for a student who owns the
+//course (or the instructor who wrote it).
+const getFullCourseDetails = asyncHandler( async (req,res) => {
+    const courseId = req.query.courseId || req.body?.courseId;
+    const userId = req.user._id;
+
+    if(!courseId){
+        throw new apiError(400, "Course Id is required")
+    }
+
+    const course = await Course.findById(courseId).populate([
+        {
+            path : "instructor",
+            populate : { path : "additionalDetails" }
+        },
+        {
+            path : "courseContent",
+            populate : { path : "subSection" }
+        },
+        {
+            path : "category"
+        }
+    ])
+
+    if(!course) {
+        throw new apiError(404, "Course not Found");
+    }
+
+    const isEnrolled = course.studentsEnrolled.some((id) => id.equals(userId));
+    const isInstructor = course.instructor?._id?.equals(userId);
+
+    if(!isEnrolled && !isInstructor) {
+        throw new apiError(403, "Enrol in this course to watch its lectures")
+    }
+
+    const progress = await CourseProgess.findOne({ courseID : courseId, userId });
+
+    const courseData = course.toObject();
+    delete courseData.studentsEnrolled;
+
+    return res
+    .status(200)
+    .json(new apiResponse(
+        200,
+        {
+            course : courseData,
+            completedVideos : progress?.completedVideos ?? []
+        },
+        "Course content fetched successfully."
+    ))
+})
+
 export {
     createCourse,
     getAllCourses,
-    getCourse
+    getCourse,
+    getFullCourseDetails
 }
