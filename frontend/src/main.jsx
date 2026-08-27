@@ -15,6 +15,9 @@ import CourseDetails from './pages/CourseDetails.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Cart from './pages/Cart.jsx'
 import Checkout from './pages/Checkout.jsx'
+import MyProfile from './pages/MyProfile.jsx'
+import EnrolledCourses from './pages/EnrolledCourses.jsx'
+import Settings from './pages/Settings.jsx'
 import { Provider } from 'react-redux'
 
 
@@ -30,6 +33,9 @@ const router  = createBrowserRouter(
       <Route path='/catalog/:catalogName' element = {<Catalog/>}/>
       <Route path='/courses/:courseId' element = {<CourseDetails/>}/>
       <Route path='/dashboard' element = {<Dashboard/>}>
+        <Route path='my-profile' element = {<MyProfile/>}/>
+        <Route path='enrolled-courses' element = {<EnrolledCourses/>}/>
+        <Route path='settings' element = {<Settings/>}/>
         <Route path='cart' element = {<Cart/>}/>
         <Route path='checkout' element = {<Checkout/>}/>
       </Route>

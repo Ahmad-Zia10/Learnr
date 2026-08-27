@@ -1,10 +1,21 @@
-import { useSelector } from "react-redux"
+import { useEffect } from "react"
+import { useDispatch, useSelector } from "react-redux"
 import { Navigate, Outlet } from "react-router-dom"
 import Sidebar from "../components/common/Sidebar"
+import { useGetUserDetailsQuery } from "../services/profileApi"
+import { setProfile } from "../store/profileSlice"
 
 //Shell for every /dashboard/* route: sidebar plus the active page.
 function Dashboard() {
+  const dispatch = useDispatch()
   const { token } = useSelector((state) => state.auth)
+
+  //Only the token survives a refresh, so re-hydrate the profile from the API.
+  const { data: user } = useGetUserDetailsQuery(undefined, { skip: !token })
+
+  useEffect(() => {
+    if (user) dispatch(setProfile(user))
+  }, [user, dispatch])
 
   if (!token) return <Navigate to="/login" replace />
 
