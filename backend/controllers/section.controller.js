@@ -85,12 +85,18 @@ const deleteSection = asyncHandler(async (req,res) =>{
   const courseObjectId = new mongoose.Types.ObjectId(courseId);
   const sectionObjectId = new mongoose.Types.ObjectId(sectionId);
 
-    // TODO : do we need to delete section id from course -courseContent?
     await Course.findByIdAndUpdate(
     courseObjectId, 
     { $pull: { courseContent: sectionObjectId } },
     { new: true }
   );
+
+    //the lectures belong to this section alone, so they go with it
+    const section = await Section.findById(sectionObjectId);
+
+    if(section?.subSection?.length) {
+        await SubSection.deleteMany({ _id : { $in : section.subSection } });
+    }
 
     await Section.findByIdAndDelete(sectionObjectId);
     return res

@@ -14,7 +14,10 @@ import {
     createCourse,
     getAllCourses,
     getCourse,
-    getFullCourseDetails
+    getFullCourseDetails,
+    getInstructorCourses,
+    updateCourse,
+    deleteCourse
 } 
 from "../controllers/course.controller.js";
 
@@ -27,6 +30,9 @@ router.route("/get-course").get(getCourse);
 //secure course routes
 router.route("/get-full-course-details").get(verifyJwt, getFullCourseDetails);
 router.route("/create-course").post(verifyJwt, isInstructor, upload.fields([{ name: "thumbnailImage", maxCount: 1 }]), createCourse);
+router.route("/get-instructor-courses").get(verifyJwt, isInstructor, getInstructorCourses);
+router.route("/update-course").patch(verifyJwt, isInstructor, upload.fields([{ name: "thumbnailImage", maxCount: 1 }]), updateCourse);
+router.route("/delete-course").delete(verifyJwt, isInstructor, deleteCourse);
 
 
 //Import Category Handler functions

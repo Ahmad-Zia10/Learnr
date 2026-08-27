@@ -42,8 +42,14 @@ const courseSchema = new Schema({
         type : Schema.Types.ObjectId,
         ref : "Category"
     },
+    //free-form tags shown on the course information form
+    tag : {
+        type : [String],
+        default : []
+    },
     instructions : {
-        type : String,
+        type : [String],
+        default : []
     },
     status : {
         type : String,
