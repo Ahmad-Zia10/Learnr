@@ -4,7 +4,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 export const courseApi = createApi({
   reducerPath: "courseApi",
-  tagTypes: ["CourseProgress"],
+  tagTypes: ["CourseProgress", "FullCourse"],
 
   baseQuery: fetchBaseQuery({
     baseUrl: "/api/v1/courses/",
@@ -40,6 +40,16 @@ export const courseApi = createApi({
         params: { courseId },
       }),
       transformResponse: (response) => response?.data ?? null,
+    }),
+
+    //Full content including video URLs; requires enrolment.
+    getFullCourseDetails: builder.query({
+      query: (courseId) => ({
+        url: "get-full-course-details",
+        params: { courseId },
+      }),
+      transformResponse: (response) => response?.data ?? null,
+      providesTags: ["FullCourse", "CourseProgress"],
     }),
 
     getCourseProgress: builder.query({
@@ -78,6 +88,15 @@ export const courseApi = createApi({
       invalidatesTags: ["CourseProgress"],
     }),
 
+    createRatingAndReview: builder.mutation({
+      query: (body) => ({
+        url: "create-rating-and-review",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["FullCourse"],
+    }),
+
     getAllCourses: builder.query({
       query: () => "get-all-courses",
       transformResponse: (response) => response?.data ?? [],
@@ -87,6 +106,8 @@ export const courseApi = createApi({
 });
 
 export const {
+  useGetFullCourseDetailsQuery,
+  useCreateRatingAndReviewMutation,
   useGetCourseProgressQuery,
   useMarkLectureCompleteMutation,
   useMarkLectureIncompleteMutation,

@@ -6,6 +6,17 @@ import { useMarkCourseCompleteMutation } from "../services/courseApi"
 
 const FILTERS = ["All", "Pending", "Completed"]
 
+//Deep-link straight into the first lecture of a course.
+const firstLecturePath = (course) => {
+  const section = (course.courseContent ?? []).find(
+    (item) => item.subSection?.length
+  )
+  const lecture = section?.subSection?.[0]
+
+  if (!section || !lecture) return `/courses/${course._id}`
+  return `/view-course/${course._id}/section/${section._id}/sub-section/${lecture._id}`
+}
+
 function ProgressBar({ value }) {
   return (
     <div className="mt-1 h-2 w-full max-w-[220px] overflow-hidden rounded-full bg-richblack-700">
@@ -94,7 +105,7 @@ function EnrolledCourses() {
               className="flex flex-wrap items-center gap-4 border-b border-richblack-700 px-6 py-5 last:border-b-0"
             >
               <Link
-                to={`/courses/${course._id}`}
+                to={firstLecturePath(course)}
                 className="flex flex-1 items-center gap-x-4"
               >
                 <img

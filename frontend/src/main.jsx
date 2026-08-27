@@ -18,6 +18,8 @@ import Checkout from './pages/Checkout.jsx'
 import MyProfile from './pages/MyProfile.jsx'
 import EnrolledCourses from './pages/EnrolledCourses.jsx'
 import Settings from './pages/Settings.jsx'
+import ViewCourse from './pages/ViewCourse.jsx'
+import VideoDetails from './pages/VideoDetails.jsx'
 import { Provider } from 'react-redux'
 
 
@@ -32,6 +34,9 @@ const router  = createBrowserRouter(
       <Route path='/update-password/:token' element = {<UpdatePassword/>}/>
       <Route path='/catalog/:catalogName' element = {<Catalog/>}/>
       <Route path='/courses/:courseId' element = {<CourseDetails/>}/>
+      <Route path='/view-course/:courseId' element = {<ViewCourse/>}>
+        <Route path='section/:sectionId/sub-section/:subSectionId' element = {<VideoDetails/>}/>
+      </Route>
       <Route path='/dashboard' element = {<Dashboard/>}>
         <Route path='my-profile' element = {<MyProfile/>}/>
         <Route path='enrolled-courses' element = {<EnrolledCourses/>}/>
