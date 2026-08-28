@@ -23,6 +23,7 @@ import courseRoutes from "./routes/course.routes.js"
 import userRoutes from "./routes/user.routes.js"
 import paymentRoutes from "./routes/payment.routes.js"
 import profileRoutes from "./routes/profile.routes.js"
+import contactRoutes from "./routes/contact.routes.js"
 
 //routes
 app.get('/', (req,res) => {
@@ -32,6 +33,7 @@ app.use("/api/v1/users",userRoutes)// "/home â†’ renders a webpage./api/users â†
 app.use("/api/v1/profile",profileRoutes)
 app.use("/api/v1/courses",courseRoutes)
 app.use("/api/v1/payment",paymentRoutes)
+app.use("/api/v1/reach",contactRoutes)
 
 //error
 app.use(errorHandler)
