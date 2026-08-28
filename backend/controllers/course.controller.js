@@ -5,12 +5,39 @@ import apiError from "../utils/apiError.js";
 import apiResponse from "../utils/apiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
+import { CourseProgess } from "../models/courseProgess.model.js";
+import { Section } from "../models/section.model.js";
+import { SubSection } from "../models/subSection.model.js";
+import { RatingAndReview } from "../models/ratingAndReview.model.js";
 
+
+//Multipart form fields arrive as strings, so accept an array, a JSON array
+//string, or a single value and normalise all three to an array.
+const parseList = (value) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value !== "string" || !value.trim()) return [];
+
+    try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [parsed];
+    } catch {
+        return [value];
+    }
+}
 
 //createCourse
 const createCourse = asyncHandler(async (req, res) => {
     //extract details
-    const {courseName:title, courseDescription : description, price, category, whatYouWillLearn : benefits} = req.body
+    const {
+        courseName:title,
+        courseDescription : description,
+        price,
+        category,
+        whatYouWillLearn : benefits,
+        tag,
+        instructions,
+        status
+    } = req.body
 
     //extract files
     const thumbnail = req.files?.thumbnailImage?.[0].path;
@@ -53,7 +80,11 @@ const createCourse = asyncHandler(async (req, res) => {
         whatYouWillLearn : benefits,
         price,
         category : categoryDetails._id,
-        thumbnail : thumbnailImage.secure_url
+        thumbnail : thumbnailImage.secure_url,
+        //these arrive as JSON strings when the form is sent as multipart
+        tag : parseList(tag),
+        instructions : parseList(instructions),
+        status : status === "Published" ? "Published" : "Draft"
     })
 
     //add new course to user schema of instructor
@@ -100,12 +131,13 @@ const getAllCourses = asyncHandler(async (req, res) => {
 
     return res
     .status(200)
-    .json(200,allCourses, "All Courses fetched succesfully");
+    .json(new apiResponse(200, allCourses, "All Courses fetched succesfully"));
 })
 
 //get specific course by course Id
 const getCourse = asyncHandler( async (req,res) => {
-    const {courseId} = req.body;
+    //GET requests carry no body, so the id arrives as a query param
+    const courseId = req.query.courseId || req.body?.courseId;
 
     //validate
     if(!courseId){
@@ -114,15 +146,17 @@ const getCourse = asyncHandler( async (req,res) => {
 
     const courseDetails = await Course.findById({_id:courseId}).select("-studentsEnrolled").populate([
             {
-                path : "instructer",
+                path : "instructor",
                 populate : {
                     path : "additionalDetails"
                 }
             },
             {
                 path : "courseContent",
+                //this endpoint is public, so never expose the video URLs here
                 populate : {
-                    path : "subSection"
+                    path : "subSection",
+                    select : "-video -videoId"
                 }
             },
             {
@@ -149,8 +183,201 @@ const getCourse = asyncHandler( async (req,res) => {
 
 })
 
+//Full course content, including video URLs. Only for a student who owns the
+//course (or the instructor who wrote it).
+const getFullCourseDetails = asyncHandler( async (req,res) => {
+    const courseId = req.query.courseId || req.body?.courseId;
+    const userId = req.user._id;
+
+    if(!courseId){
+        throw new apiError(400, "Course Id is required")
+    }
+
+    const course = await Course.findById(courseId).populate([
+        {
+            path : "instructor",
+            populate : { path : "additionalDetails" }
+        },
+        {
+            path : "courseContent",
+            populate : { path : "subSection" }
+        },
+        {
+            path : "category"
+        }
+    ])
+
+    if(!course) {
+        throw new apiError(404, "Course not Found");
+    }
+
+    const isEnrolled = course.studentsEnrolled.some((id) => id.equals(userId));
+    const isInstructor = course.instructor?._id?.equals(userId);
+
+    if(!isEnrolled && !isInstructor) {
+        throw new apiError(403, "Enrol in this course to watch its lectures")
+    }
+
+    const progress = await CourseProgess.findOne({ courseID : courseId, userId });
+
+    const courseData = course.toObject();
+    delete courseData.studentsEnrolled;
+
+    return res
+    .status(200)
+    .json(new apiResponse(
+        200,
+        {
+            course : courseData,
+            completedVideos : progress?.completedVideos ?? []
+        },
+        "Course content fetched successfully."
+    ))
+})
+
+//Every course belonging to the signed-in instructor.
+const getInstructorCourses = asyncHandler( async (req,res) => {
+    const courses = await Course.find({ instructor : req.user._id })
+        .populate({
+            path : "courseContent",
+            populate : { path : "subSection", select : "_id timeDuration" }
+        })
+        .sort({ createdAt : -1 });
+
+    return res
+    .status(200)
+    .json(new apiResponse(200, courses, "Instructor courses fetched successfully."))
+})
+
+//Edit a course the signed-in instructor owns.
+const updateCourse = asyncHandler( async (req,res) => {
+    const { courseId } = req.body;
+
+    if(!courseId) {
+        throw new apiError(400, "Course Id is required")
+    }
+
+    const course = await Course.findById(courseId);
+
+    if(!course) {
+        throw new apiError(404, "Course not found")
+    }
+
+    //an instructor may only edit their own course
+    if(!course.instructor.equals(req.user._id)) {
+        throw new apiError(403, "You can only edit your own courses")
+    }
+
+    const {
+        courseName,
+        courseDescription,
+        price,
+        category,
+        whatYouWillLearn,
+        tag,
+        instructions,
+        status
+    } = req.body;
+
+    if(category) {
+        const categoryDetails = await Category.findById(category);
+        if(!categoryDetails) {
+            throw new apiError(404, "Category not found")
+        }
+
+        //keep both category documents in step with the move
+        if(!course.category?.equals(categoryDetails._id)) {
+            await Category.findByIdAndUpdate(course.category, {
+                $pull : { courses : course._id }
+            });
+            await Category.findByIdAndUpdate(categoryDetails._id, {
+                $addToSet : { courses : course._id }
+            });
+            course.category = categoryDetails._id;
+        }
+    }
+
+    //replace the thumbnail only when a new file was uploaded
+    const thumbnail = req.files?.thumbnailImage?.[0]?.path;
+    if(thumbnail) {
+        const uploaded = await uploadToCloudinary(thumbnail);
+        if(!uploaded) {
+            throw new apiError(500, "Failed to upload thumbnail Image")
+        }
+        course.thumbnail = uploaded.secure_url;
+    }
+
+    if(courseName) course.courseName = courseName;
+    if(courseDescription) course.courseDescription = courseDescription;
+    if(price !== undefined) course.price = price;
+    if(whatYouWillLearn) course.whatYouWillLearn = whatYouWillLearn;
+    if(tag !== undefined) course.tag = parseList(tag);
+    if(instructions !== undefined) course.instructions = parseList(instructions);
+    if(status) course.status = status === "Published" ? "Published" : "Draft";
+
+    await course.save();
+
+    return res
+    .status(200)
+    .json(new apiResponse(200, course, "Course updated successfully."))
+})
+
+//Delete a course along with the content that only belongs to it.
+const deleteCourse = asyncHandler( async (req,res) => {
+    const courseId = req.body?.courseId || req.query?.courseId;
+
+    if(!courseId) {
+        throw new apiError(400, "Course Id is required")
+    }
+
+    const course = await Course.findById(courseId);
+
+    if(!course) {
+        throw new apiError(404, "Course not found")
+    }
+
+    if(!course.instructor.equals(req.user._id)) {
+        throw new apiError(403, "You can only delete your own courses")
+    }
+
+    //refuse to pull a paid course out from under its students
+    if(course.studentsEnrolled.length) {
+        throw new apiError(
+            409,
+            "This course has enrolled students and cannot be deleted"
+        )
+    }
+
+    //remove the lectures and sections that exist only for this course
+    const sections = await Section.find({ _id : { $in : course.courseContent } });
+    const subSectionIds = sections.flatMap((section) => section.subSection);
+
+    await SubSection.deleteMany({ _id : { $in : subSectionIds } });
+    await Section.deleteMany({ _id : { $in : course.courseContent } });
+    await RatingAndReview.deleteMany({ course : course._id });
+    await CourseProgess.deleteMany({ courseID : course._id });
+
+    //and detach it from the documents that merely reference it
+    await Category.findByIdAndUpdate(course.category, {
+        $pull : { courses : course._id }
+    });
+    await User.findByIdAndUpdate(course.instructor, {
+        $pull : { courses : course._id }
+    });
+
+    await Course.findByIdAndDelete(course._id);
+
+    return res
+    .status(200)
+    .json(new apiResponse(200, null, "Course deleted successfully."))
+})
+
 export {
     createCourse,
     getAllCourses,
-    getCourse
+    getCourse,
+    getFullCourseDetails,
+    getInstructorCourses,
+    updateCourse,
+    deleteCourse
 }

@@ -14,7 +14,7 @@ const otpSchema = new Schema({
     },
     createdAt : {
         type : Date,
-        default : Date.now(),
+        default : Date.now,
         expires : 10*60//Mongoose sets a TTL (Time To Live) index in MongoDB behind the scenes. MongoDB’s background process checks this index and deletes expired documents.
     }
 })

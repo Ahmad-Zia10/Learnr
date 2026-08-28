@@ -36,7 +36,7 @@ const isStudent = asyncHandler( async (req, res, next) => {
     const role = req.user.accountType;
 
     if(role !== "Student"){
-        return new apiError(403, "This is a protected route for Students only.");
+        throw new apiError(403, "This is a protected route for Students only.");
     }
     next();
 })
@@ -46,7 +46,7 @@ const isInstructor = asyncHandler( async (req, res, next) => {
     const role = req.user.accountType;
 
     if(role !== "Instructor"){
-        return new apiError(403, "This is a protected route for Instructor only.");
+        throw new apiError(403, "This is a protected route for Instructor only.");
     }
     next();
 })
@@ -56,7 +56,7 @@ const isAdmin = asyncHandler( async (req, res, next) => {
     const role = req.user.accountType;
 
     if(role !== "Admin"){
-        return new apiError(403, "This is a protected route for Admin only.");
+        throw new apiError(403, "This is a protected route for Admin only.");
     }
     next();
 })

@@ -23,15 +23,17 @@ import courseRoutes from "./routes/course.routes.js"
 import userRoutes from "./routes/user.routes.js"
 import paymentRoutes from "./routes/payment.routes.js"
 import profileRoutes from "./routes/profile.routes.js"
+import contactRoutes from "./routes/contact.routes.js"
 
 //routes
 app.get('/', (req,res) => {
-
+    res.status(200).json({ status: "ok", message: "StudyNotion API is running" })
 })
 app.use("/api/v1/users",userRoutes)// "/home → renders a webpage./api/users → returns JSON with user data."Means these are API endpoints
 app.use("/api/v1/profile",profileRoutes)
 app.use("/api/v1/courses",courseRoutes)
 app.use("/api/v1/payment",paymentRoutes)
+app.use("/api/v1/reach",contactRoutes)
 
 //error
 app.use(errorHandler)

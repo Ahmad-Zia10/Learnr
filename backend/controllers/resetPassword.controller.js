@@ -26,7 +26,7 @@ import asyncHandler from "../utils/asyncHandler.js";
     const user = await User.findOne({email});
 
     if(!user) {
-        throw new apiError(401, "User woth given email does not exist!")
+        throw new apiError(401, "User with given email does not exist!")
     }
 
     const token = crypto.randomBytes(20).toString("hex");
@@ -36,7 +36,8 @@ import asyncHandler from "../utils/asyncHandler.js";
     await user.save({validateBeforeSave : false});
 
 
-    const url = `http://localhost:3000/update-password/${token}`;
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const url = `${frontendUrl}/update-password/${token}`;
 
     await mailSender(
         email,

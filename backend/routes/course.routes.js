@@ -13,7 +13,11 @@ from "../middleware/auth.js";
 import {
     createCourse,
     getAllCourses,
-    getCourse
+    getCourse,
+    getFullCourseDetails,
+    getInstructorCourses,
+    updateCourse,
+    deleteCourse
 } 
 from "../controllers/course.controller.js";
 
@@ -24,7 +28,11 @@ router.route("/get-all-courses").get(getAllCourses);
 router.route("/get-course").get(getCourse);
 
 //secure course routes
+router.route("/get-full-course-details").get(verifyJwt, getFullCourseDetails);
 router.route("/create-course").post(verifyJwt, isInstructor, upload.fields([{ name: "thumbnailImage", maxCount: 1 }]), createCourse);
+router.route("/get-instructor-courses").get(verifyJwt, isInstructor, getInstructorCourses);
+router.route("/update-course").patch(verifyJwt, isInstructor, upload.fields([{ name: "thumbnailImage", maxCount: 1 }]), updateCourse);
+router.route("/delete-course").delete(verifyJwt, isInstructor, deleteCourse);
 
 
 //Import Category Handler functions
@@ -66,6 +74,21 @@ router.route("/create-subSection").post(verifyJwt, isInstructor, upload.fields([
 router.route("/update-subSection").patch(verifyJwt, isInstructor, upload.fields([{ name: "lectureVideo", maxCount: 1 }]), updateSubSection);
 router.route("/delete-subSection").post(verifyJwt, isInstructor, deleteSubSection);
 
+
+//import course progress handler functions
+import {
+    markLectureComplete,
+    markLectureIncomplete,
+    markCourseComplete,
+    getCourseProgress
+}
+from "../controllers/courseProgress.controller.js";
+
+//Course Progress Routes
+router.route("/update-course-progress").post(verifyJwt, isStudent, markLectureComplete);
+router.route("/mark-lecture-incomplete").post(verifyJwt, isStudent, markLectureIncomplete);
+router.route("/mark-course-complete").post(verifyJwt, isStudent, markCourseComplete);
+router.route("/get-course-progress").get(verifyJwt, isStudent, getCourseProgress);
 
 //import rating and reviews handler functions
 import { 

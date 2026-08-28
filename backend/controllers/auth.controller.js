@@ -17,7 +17,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
         const user = await User.findById(userId);
 
         if(!user) {
-            throw new apiError(401, "USer could not be fetched from database");
+            throw new apiError(401, "User could not be fetched from database");
         }
 
         const accessToken = user.generateAccessToken();
@@ -51,7 +51,7 @@ const sendOTP = asyncHandler(async (req,res) => {
 
     //generate OTP
 
-    const otp = otpGenerator.generate(6,{
+    let otp = otpGenerator.generate(6,{
         upperCaseAlphabets: false,
         specialChars: false,
         lowerCaseAlphabets: false
@@ -71,18 +71,15 @@ const sendOTP = asyncHandler(async (req,res) => {
     }
 
     //entry of otp into database
-    console.log("Unique otp is", otp);
     try {
         const otpBody = await OTP.create({
             email,
             otp,
         });
 
-        console.log("OTP Body", otpBody);
-        
         return res
         .status(200)
-        .json(new apiResponse(200, otp, "OTP created succesfully"));
+        .json(new apiResponse(200, { email }, "OTP sent successfully"));
     } catch (error) {
         throw new apiError(500, "Something went wrong while creating OTP document inside database")
     }
@@ -114,15 +111,15 @@ const refreshAccessToken = asyncHandler(async (req,res) => {
 
         const options = {
             httpOnly : true,
-            secure : process.env.NODE_ENV === "development"
+            secure : process.env.NODE_ENV === "production"
         }
 
-        const {accessToken, refreshToken : newRefreshToken} = generateAccessAndRefreshTokens(user._id);
+        const {accessToken, refreshToken : newRefreshToken} = await generateAccessAndRefreshTokens(user._id);
 
         return res
         .status(200)
-        .cookies("accessToken",accessToken, options)
-        .cookies("refreshToken",newRefreshToken,options)
+        .cookie("accessToken",accessToken, options)
+        .cookie("refreshToken",newRefreshToken,options)
         .json(new apiResponse(
             200,
             {
@@ -159,8 +156,6 @@ const signUp = asyncHandler(async (req,res)=> {
         throw new apiError(400, "Incomplete credentials.")
     };
 
-    console.log("Otp is",otp);
-
     //check password and confirm password is same or not
 
     if(password !== confirmPassword) {
@@ -177,8 +172,6 @@ const signUp = asyncHandler(async (req,res)=> {
     //find the most recent otp stored for the user
     const response = await OTP.find({email}).sort({createdAt : -1}).limit(1);
 
-    console.log("Response is", response)
-
     if(response.length === 0) {
         throw new apiError(400, "Otp is not valid");
     }
@@ -186,15 +179,12 @@ const signUp = asyncHandler(async (req,res)=> {
         throw new apiError(400, "Otp is not valid");
     }
 
-    console.log("recent otp is",response[0].otp)
-
     //OTP is found correctly and mathced correctly.
     //Now create entry of user in database.
 
     //But first create profile details of user. Initially when user registers, the profile details will be empty
 
-    let approved = "";
-	approved === "Instructor" ? (approved = false) : (approved = true);
+    const approved = accountType !== "Instructor";
 
     const profileDetails = await Profile.create({
         gender : null,
@@ -202,8 +192,6 @@ const signUp = asyncHandler(async (req,res)=> {
         about : null,
         contactNumber
     })
-
-    console.log("Password is", password);
 
     try {
         const user = await User.create({
@@ -225,8 +213,11 @@ const signUp = asyncHandler(async (req,res)=> {
 
     } catch (error) {
 
+      //clean up the orphaned profile created above
+      await Profile.findByIdAndDelete(profileDetails?._id).catch(() => {});
+
       console.log("Error while creating database document of user",error.message);
-      throw new apiError(500, "User could not be created in database");  
+      throw new apiError(500, "User could not be created in database");
 
     }
 })
@@ -237,19 +228,20 @@ const loginUser = asyncHandler(async (req,res) => {
     const {email, password} = req.body;
     //check if details are missing
     if(!(email&&password)) {
-        throw new apiError(401, "Incmplete Credentials");
+        throw new apiError(400, "Incmplete Credentials");
     }
     //validate user
     const user = await User.findOne({email});
 
     if(!user) {
-        throw new apiError(401, "User with this email does not exist");
+        throw new apiError(404, "User with this email does not exist");
     }
     //if user exists, then proceed to password validation
     const isPasswordValid = await user.isPasswordCorrect(password);
 
     if(!isPasswordValid) {
         throw new apiError(401, "Password Incorrect");
+    
     }
 
     //Generate access and refresh tokens
@@ -258,12 +250,12 @@ const loginUser = asyncHandler(async (req,res) => {
     const loggedInUser = await User.findById(user._id).select("-passwrod -refreshToken");
     
     if(!loggedInUser) {
-        throw new apiError(400, "User could not be logged In");
+        throw new apiError(500, "User could not be logged In");
     }
 
     const options = {
         httpOnly : true,
-        secure : process.env.NODE_ENV === "development"
+        secure : process.env.NODE_ENV === "production"
     }
 
     return res
@@ -288,10 +280,15 @@ const changePassword = asyncHandler(async (req,res) => {
         throw new apiError(401, "All fields are required");
     }
 
-    const user = req.user
+    //re-fetch with password field (req.user is stripped of password by verifyJwt)
+    const user = await User.findById(req.user._id);
 
-    //validate old password 
-    if(!user.isPasswordCorrect(oldPassword)){
+    if(!user) {
+        throw new apiError(404, "User not found");
+    }
+
+    //validate old password
+    if(!(await user.isPasswordCorrect(oldPassword))){
         throw new apiError(400, "Password is incorrect!")
     }
 
