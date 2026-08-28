@@ -20,6 +20,9 @@ import EnrolledCourses from './pages/EnrolledCourses.jsx'
 import Settings from './pages/Settings.jsx'
 import MyCourses from './pages/MyCourses.jsx'
 import AddCourse from './pages/AddCourse.jsx'
+import PurchaseHistory from './pages/PurchaseHistory.jsx'
+import About from './pages/About.jsx'
+import Contact from './pages/Contact.jsx'
 import ViewCourse from './pages/ViewCourse.jsx'
 import VideoDetails from './pages/VideoDetails.jsx'
 import { Provider } from 'react-redux'
@@ -34,6 +37,8 @@ const router  = createBrowserRouter(
       <Route path='/verify-email' element = {<VerifyEmail/>}/>
       <Route path='/forgot-password' element = {<ForgotPassword/>}/>
       <Route path='/update-password/:token' element = {<UpdatePassword/>}/>
+      <Route path='/about' element = {<About/>}/>
+      <Route path='/contact' element = {<Contact/>}/>
       <Route path='/catalog/:catalogName' element = {<Catalog/>}/>
       <Route path='/courses/:courseId' element = {<CourseDetails/>}/>
       <Route path='/view-course/:courseId' element = {<ViewCourse/>}>
@@ -42,6 +47,7 @@ const router  = createBrowserRouter(
       <Route path='/dashboard' element = {<Dashboard/>}>
         <Route path='my-profile' element = {<MyProfile/>}/>
         <Route path='enrolled-courses' element = {<EnrolledCourses/>}/>
+        <Route path='purchase-history' element = {<PurchaseHistory/>}/>
         <Route path='settings' element = {<Settings/>}/>
         <Route path='my-courses' element = {<MyCourses/>}/>
         <Route path='add-course' element = {<AddCourse/>}/>

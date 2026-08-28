@@ -16,7 +16,15 @@ export const paymentApi = createApi({
     },
   }),
 
+  tagTypes: ["Orders"],
+
   endpoints: (builder) => ({
+
+    getPurchaseHistory: builder.query({
+      query: () => "purchase-history",
+      transformResponse: (response) => response?.data ?? [],
+      providesTags: ["Orders"],
+    }),
 
     //Creates a single Razorpay order covering every course in the cart.
     capturePayment: builder.mutation({
@@ -36,6 +44,8 @@ export const paymentApi = createApi({
         body: payment,
       }),
       transformResponse: (response) => response?.data ?? null,
+      //a completed purchase belongs in the history straight away
+      invalidatesTags: ["Orders"],
     }),
 
   }),
@@ -44,4 +54,5 @@ export const paymentApi = createApi({
 export const {
   useCapturePaymentMutation,
   useVerifyPaymentMutation,
+  useGetPurchaseHistoryQuery,
 } = paymentApi;
