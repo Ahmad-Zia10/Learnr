@@ -2,10 +2,8 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "frontend",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev:vite", "--prefix", "frontend"],
-      "port": 3000
+      "name": "frontend-attach",
+      "url": "http://localhost:3000"
     }
   ]
 }
