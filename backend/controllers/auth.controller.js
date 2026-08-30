@@ -247,7 +247,7 @@ const loginUser = asyncHandler(async (req,res) => {
     //Generate access and refresh tokens
     const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id);
 
-    const loggedInUser = await User.findById(user._id).select("-passwrod -refreshToken");
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
     
     if(!loggedInUser) {
         throw new apiError(500, "User could not be logged In");
