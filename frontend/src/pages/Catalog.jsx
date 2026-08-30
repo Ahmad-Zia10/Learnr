@@ -31,7 +31,9 @@ const sortCourses = (courses, tab) => {
     )
   }
   //Most popular: the courses with the most enrolments the platform knows about
-  return list.sort((a, b) => (b.sold ?? 0) - (a.sold ?? 0))
+  return list.sort(
+    (a, b) => (b.studentsEnrolledCount ?? 0) - (a.studentsEnrolledCount ?? 0)
+  )
 }
 
 function Catalog() {

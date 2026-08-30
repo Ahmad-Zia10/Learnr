@@ -101,17 +101,29 @@ const categoryPageDetails = asyncHandler(async (req,res) => {
     const allCourses = allCategories.flatMap((element) => {
             return element.courses;
     })
-    //get top 10 most selling courses
-    let mostSellingCourses = allCourses.sort((a,b) => b.sold -a.sold).splice(0,10)
+    //get top 10 most selling courses. Popularity is the enrolment count the
+    //platform already tracks - there is no separate "sold" counter to keep in step.
+    let mostSellingCourses = allCourses
+        .sort((a,b) => (b.studentsEnrolled?.length ?? 0) - (a.studentsEnrolled?.length ?? 0))
+        .slice(0,10)
+
+    //This endpoint is public, so replace the roster of enrolled student ids
+    //with the only part of it a visitor needs: how many there are.
+    const withEnrolmentCount = (course) => {
+        const plain = course.toObject ? course.toObject() : { ...course };
+        plain.studentsEnrolledCount = course.studentsEnrolled?.length ?? 0;
+        delete plain.studentsEnrolled;
+        return plain;
+    }
 
     return res
     .status(200)
     .json(new apiResponse(
         200,
         {
-            selectedCourses,
-            differentCourses,
-            mostSellingCourses,
+            selectedCourses : selectedCourses.map(withEnrolmentCount),
+            differentCourses : differentCourses.map(withEnrolmentCount),
+            mostSellingCourses : mostSellingCourses.map(withEnrolmentCount),
         },
         "Category page details fetched successfully"
     ))
