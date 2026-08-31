@@ -4,9 +4,13 @@ dotenv.config();
 import { connect, disconnect, countAll, wipe } from "./db.js";
 import verify from "./verify.js";
 
-//Content modules are registered here as each phase lands. Phase 01 ships the
-//harness alone, so an empty list is expected and not an error.
-const PHASES = [];
+import people from "./phases/people.js";
+
+//Content modules are registered here as each phase lands. Order matters: a
+//phase may only reference documents an earlier phase created.
+const PHASES = [
+    people
+];
 
 const label = (text) => `\n${text}\n${"-".repeat(text.length)}`;
 

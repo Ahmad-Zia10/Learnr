@@ -2,6 +2,7 @@ import { Category } from "../models/category.model.js";
 import { Course } from "../models/course.model.js";
 import { CourseProgess } from "../models/courseProgess.model.js";
 import { Order } from "../models/order.model.js";
+import { Profile } from "../models/profile.model.js";
 import { RatingAndReview } from "../models/ratingAndReview.model.js";
 import { Section } from "../models/section.model.js";
 import { SubSection } from "../models/subSection.model.js";
@@ -16,13 +17,15 @@ const verify = async () => {
     const problems = [];
     const fail = (message) => problems.push(message);
 
-    const [courses, sections, subSections, categories, users, reviews, orders, progress] =
+    const [courses, sections, subSections, categories, users, profiles, reviews, orders, progress] =
         await Promise.all([
             Course.find({}).lean(),
             Section.find({}).lean(),
             SubSection.find({}).lean(),
             Category.find({}).lean(),
-            User.find({}).lean(),
+            //password is normally hidden from queries; the hash check needs it
+            User.find({}).select("+password").lean(),
+            Profile.find({}).lean(),
             RatingAndReview.find({}).lean(),
             Order.find({}).lean(),
             CourseProgess.find({}).lean()
@@ -117,11 +120,31 @@ const verify = async () => {
     }
 
     //--- users -------------------------------------------------------------
+    const emails = new Set();
+
     for (const user of users) {
         const label = `${user.firstName} ${user.lastName}`;
 
         if(!user.additionalDetails) {
             fail(`user "${label}" has no profile, which My Profile requires`);
+        } else if(!profiles.some((profile) => id(profile) === id(user.additionalDetails))) {
+            fail(`user "${label}" points at a profile that does not exist`);
+        }
+
+        //a bulk insert skips the hashing hook, producing an account that looks
+        //fine here and can never log in
+        if(!/^\$2[aby]\$/.test(user.password ?? "")) {
+            fail(`user "${label}" has an unhashed password and cannot log in`);
+        }
+
+        //login looks users up by email, so a duplicate makes one unreachable
+        if(emails.has(user.email)) {
+            fail(`email "${user.email}" is used by more than one account`);
+        }
+        emails.add(user.email);
+
+        if(user.accountType === "Instructor" && !user.approved) {
+            fail(`instructor "${label}" is not approved and cannot publish`);
         }
 
         for (const courseId of user.courses ?? []) {
