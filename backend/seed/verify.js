@@ -164,6 +164,10 @@ const verify = async () => {
     }
 
     //--- reviews -----------------------------------------------------------
+    //the API allows one review per student per course, so seeded data that
+    //breaks that rule could never have been produced through the app
+    const reviewPairs = new Set();
+
     for (const review of reviews) {
         const course = courses.find((entry) => id(entry) === id(review.course));
 
@@ -180,6 +184,12 @@ const verify = async () => {
         if(!(course.studentsEnrolled ?? []).map(id).includes(id(review.user))) {
             fail(`"${course.courseName}" has a review from a student who is not enrolled`);
         }
+
+        const pair = `${id(review.user)}:${id(review.course)}`;
+        if(reviewPairs.has(pair)) {
+            fail(`"${course.courseName}" has more than one review from the same student`);
+        }
+        reviewPairs.add(pair);
 
         if(review.rating < 1 || review.rating > 5) {
             fail(`a review of "${course.courseName}" has an out-of-range rating ${review.rating}`);

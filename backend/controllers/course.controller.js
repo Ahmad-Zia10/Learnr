@@ -160,7 +160,13 @@ const getCourse = asyncHandler( async (req,res) => {
                 }
             },
             {
-                path : "ratingAndReviews"
+                path : "ratingAndReviews",
+                //a review is only useful with a name against it; the email and
+                //everything else stays private
+                populate : {
+                    path : "user",
+                    select : "firstName lastName image"
+                }
             },
             {
                 path : "category"

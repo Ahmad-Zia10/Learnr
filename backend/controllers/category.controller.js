@@ -49,6 +49,17 @@ const showAllCategories = asyncHandler( async (req,res) => {
     ))
 })
 
+//Course cards show a star average, which they compute from the review list, so
+//the ratings have to come with the course. Only the number is needed - the
+//review text belongs on the course page, not on every card.
+const withCourses = {
+    path : "courses",
+    populate : {
+        path : "ratingAndReviews",
+        select : "rating"
+    }
+};
+
 const categoryPageDetails = asyncHandler(async (req,res) => {
     //GET requests carry no body, so the id arrives as a query param
     const categoryId = req.query.categoryId || req.body?.categoryId;
@@ -58,7 +69,7 @@ const categoryPageDetails = asyncHandler(async (req,res) => {
         throw new apiError(400, "Category Id is required")
     }
     //check if category exists
-    const selectedCategory = await Category.findById({_id : categoryId}).populate("courses")
+    const selectedCategory = await Category.findById({_id : categoryId}).populate(withCourses)
     
     if(!selectedCategory) {
         throw new apiError(400, "Category not found")
@@ -85,7 +96,7 @@ const categoryPageDetails = asyncHandler(async (req,res) => {
                 $ne : categoryId
             }
         }
-    ).populate("courses")
+    ).populate(withCourses)
 
     let differentCourses = otherCategories.map((element) => {
             return element.courses;
@@ -97,7 +108,7 @@ const categoryPageDetails = asyncHandler(async (req,res) => {
     
 
     //get best selling courses 
-    const allCategories = await Category.find().populate("courses");
+    const allCategories = await Category.find().populate(withCourses);
     const allCourses = allCategories.flatMap((element) => {
             return element.courses;
     })
