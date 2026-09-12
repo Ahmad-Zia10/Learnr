@@ -1,6 +1,7 @@
 import React from 'react'
 import { IoMdArrowRoundForward } from "react-icons/io";
 import { Link } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import HighlightText from '../components/core/Home/HighlightText';
 import CTAButton from '../components/core/Home/CTAButton';
 import banner from '../assets/Images/banner.mp4'
@@ -12,6 +13,8 @@ import ExploreMore from '../components/core/Home/ExploreMore.jsx';
 
 
 function Home() {
+  const { token } = useSelector((state) => state.auth)
+
   return (
     <>
       {/* {section 1} */}
@@ -21,22 +24,26 @@ function Home() {
         <div className='relative mx-auto flex flex-col w-11/12 max-w-maxContent items-center 
         text-white justify-between z-10 px-10'>
 
-          {/* Become an Instructor - Button */}
-          <Link to={"/signup"}>
+          {/* Become an Instructor - Button.
+              It only ever pointed at signup, so it has nothing to offer someone
+              who is already signed in. */}
+          {!token && (
+            <Link to={"/signup"}>
 
-            <div className=' group mt-16 p-1 mx-auto rounded-full bg-richblack-800 text-richblack-200
-            transition-all duration-200 hover:scale-95 w-fit'>
+              <div className=' group mt-16 p-1 mx-auto rounded-full bg-richblack-800 text-richblack-200
+              transition-all duration-200 hover:scale-95 w-fit'>
 
-              <div className='flex flex-row items-center gap-2 rounded-full px-8 py-[5px]
-              transition-all duration-200 group-hover:bg-richblack-900 text-[21px]'>
+                <div className='flex flex-row items-center gap-2 rounded-full px-8 py-[5px]
+                transition-all duration-200 group-hover:bg-richblack-900 text-[21px]'>
 
-                <p>Become an Instructor</p>
-                <IoMdArrowRoundForward />
-                  
+                  <p>Become an Instructor</p>
+                  <IoMdArrowRoundForward />
+
+                </div>
               </div>
-            </div>
-    
-          </Link>
+
+            </Link>
+          )}
 
           {/* Empower Text */}
           <div className='text-4xl text-center font-semibold mt-8'>

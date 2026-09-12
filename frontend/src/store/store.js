@@ -2,11 +2,11 @@ import { configureStore } from "@reduxjs/toolkit";
 import authReducer from '../store/authSlice.js'
 import profileReducer from '../store/profileSlice.js'
 import cartReducer from '../store/cartSlice.js'
-import { authApi } from "../services/authApi.js";
-import { courseApi } from "../services/courseApi.js";
-import { paymentApi } from "../services/paymentApi.js";
-import { profileApi } from "../services/profileApi.js";
-import { contactApi } from "../services/contactApi.js";
+import { authApi } from "../services/authApi";
+import { courseApi } from "../services/courseApi";
+import { paymentApi } from "../services/paymentApi";
+import { profileApi } from "../services/profileApi";
+import { contactApi } from "../services/contactApi";
 
 
 const store = configureStore({

@@ -6,6 +6,7 @@ import mailSender from "../utils/mailSender.js";
 import { OTP } from "../models/otp.model.js";
 import apiResponse from "../utils/apiResponse.js";
 import { Profile } from "../models/profile.model.js";
+import passwordUpdated from "../mail/templates/passwordUpdate.js";
 import jwt from "jsonwebtoken"
 
 
@@ -81,6 +82,14 @@ const sendOTP = asyncHandler(async (req,res) => {
         .status(200)
         .json(new apiResponse(200, { email }, "OTP sent successfully"));
     } catch (error) {
+        //the document is saved by a hook that also sends the verification
+        //email, so distinguish the two rather than always blaming the database
+        console.log("Could not issue OTP:", error.message);
+
+        if(error.code === "EAUTH" || error.code === "ECONNECTION" || error.responseCode) {
+            throw new apiError(502, "Could not send the verification email. Please try again shortly.")
+        }
+
         throw new apiError(500, "Something went wrong while creating OTP document inside database")
     }
 })
@@ -247,7 +256,7 @@ const loginUser = asyncHandler(async (req,res) => {
     //Generate access and refresh tokens
     const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id);
 
-    const loggedInUser = await User.findById(user._id).select("-passwrod -refreshToken");
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
     
     if(!loggedInUser) {
         throw new apiError(500, "User could not be logged In");
@@ -303,12 +312,15 @@ const changePassword = asyncHandler(async (req,res) => {
 
     //sending affirmation email
     try {
-        const confirmationEmail = await mailSender(user.email, "Study Notion Confirmation Mail: Password Updated Successfully");
-        console.log("Confirmation Email sent successfully",confirmationEmail)
-
+        await mailSender(
+            user.email,
+            "Study Notion Confirmation Mail: Password Updated Successfully",
+            passwordUpdated(user.email, `${user.firstName} ${user.lastName}`)
+        );
     } catch (error) {
-        console.log("Error occurred while sending mail", error.message)
-        throw new apiError(200, "Error occured while sending mail");
+        //the password has already been changed at this point, so a failed
+        //courtesy email must not be reported to the user as a failure
+        console.log("Could not send password confirmation email", error.message)
     }
 
     return res
