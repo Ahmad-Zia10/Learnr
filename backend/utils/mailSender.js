@@ -20,7 +20,11 @@ const mailSender = async (email, title, body) => {
         return info;
 
     } catch (error) {
-        console.log(error.message);
+        //Swallowing this used to make a broken mail configuration look like a
+        //success: signup returned "OTP sent" with no email ever leaving. Callers
+        //that can carry on without the mail catch this themselves.
+        console.log("Mail could not be sent:", error.message);
+        throw error;
     }
 }
 
