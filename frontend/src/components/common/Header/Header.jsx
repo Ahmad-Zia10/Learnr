@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux'
 import { IoSearchSharp } from "react-icons/io5";
 import { BsCart3 } from "react-icons/bs";
 import { RiArrowDropDownLine } from "react-icons/ri";
-import { useGetCategoriesQuery } from '../../../services/courseApi.js'
+import { useGetCategoriesQuery } from '../../../services/courseApi'
 
 function Header() {
 
@@ -92,17 +92,44 @@ function Header() {
               </Link>
             </div>
           ) : (
-              user && user?.accountType !== "Instructor" && (
+            <div className='flex flex-row items-center gap-x-5'>
+
+              {/* Instructors have nothing to buy, so no cart for them */}
+              {user?.accountType !== "Instructor" && (
                 <Link to={'/dashboard/cart'} className='flex relative flex-row items-center gap-x-4'>
                   <BsCart3 className=' text-richblack-200'/>
                   {totalItems > 0 && (
-                    <span className='absolute text-richblack-25 bg-red-500 rounded-full w-[15px] flex justify-center 
+                    <span className='absolute text-richblack-25 bg-red-500 rounded-full w-[15px] flex justify-center
                     text-[10px] -top-3 -right-3'>
                       {totalItems}
                     </span>
                   )}
                 </Link>
-              )
+              )}
+
+              {/* Profile menu. Shown as soon as there is a token: the user
+                  object can still be loading, and hiding this until it arrives
+                  is what made a signed-in account look signed out. */}
+              <div className='group relative flex items-center'>
+                <img
+                  src={user?.image || `https://api.dicebear.com/9.x/initials/svg?seed=${user?.firstName ?? "S"} ${user?.lastName ?? ""}`}
+                  alt={user ? `${user.firstName} ${user.lastName}` : "Your account"}
+                  className='aspect-square w-[30px] rounded-full object-cover'
+                />
+                <RiArrowDropDownLine className='text-richblack-100'/>
+
+                <div className='invisible absolute right-0 top-[100%] z-20 flex w-[160px] flex-col
+                rounded-md border border-richblack-700 bg-richblack-800 py-2 opacity-0 transition-all
+                duration-200 group-hover:visible group-hover:opacity-100'>
+                  <Link
+                    to={'/dashboard/my-profile'}
+                    className='px-4 py-2 text-[0.875rem] text-richblack-100 hover:bg-richblack-700'
+                  >
+                    Dashboard
+                  </Link>
+                </div>
+              </div>
+            </div>
           )
         }
       </div>

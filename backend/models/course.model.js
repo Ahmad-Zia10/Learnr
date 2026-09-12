@@ -29,7 +29,7 @@ const courseSchema = new Schema({
     ratingAndReviews : [
         {
             type : Schema.Types.ObjectId,
-            ref : "RatingAndReviews"
+            ref : "RatingAndReview"
         }
     ],
     price : {
@@ -63,6 +63,9 @@ const courseSchema = new Schema({
             required : true
         }
     ]
-});
+},
+//the course detail page prints the creation date, and the catalog's "New" tab
+//sorts on it
+{timestamps : true});
 
 export const Course = mongoose.model("Course", courseSchema)

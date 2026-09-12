@@ -5,11 +5,13 @@ import { connect, disconnect, countAll, wipe } from "./db.js";
 import verify from "./verify.js";
 
 import people from "./phases/people.js";
+import catalog from "./phases/catalog.js";
 
 //Content modules are registered here as each phase lands. Order matters: a
 //phase may only reference documents an earlier phase created.
 const PHASES = [
-    people
+    people,
+    catalog
 ];
 
 const label = (text) => `\n${text}\n${"-".repeat(text.length)}`;

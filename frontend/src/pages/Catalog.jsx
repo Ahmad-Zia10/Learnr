@@ -40,7 +40,8 @@ function Catalog() {
   const { catalogName } = useParams()
   const [activeTab, setActiveTab] = useState(SORT_TABS[0])
 
-  const { data: categories = [] } = useGetCategoriesQuery()
+  const { data: categories = [], isFetching: categoriesLoading } =
+    useGetCategoriesQuery()
 
   //The URL carries the category name, the API wants its id.
   const category = useMemo(
@@ -65,7 +66,10 @@ function Catalog() {
     [pageDetails, activeTab]
   )
 
-  if (isFetching) {
+  //Until the categories arrive there is nothing to match the URL against, so
+  //this has to wait too - otherwise the page renders an empty hero and claims
+  //the category holds no courses.
+  if (categoriesLoading || isFetching) {
     return (
       <p className="mx-auto max-w-maxContent py-20 text-richblack-100">
         Loading catalog...
@@ -73,7 +77,7 @@ function Catalog() {
     )
   }
 
-  if (isError || (!category && categories.length)) {
+  if (isError || !category) {
     return (
       <p className="mx-auto max-w-maxContent py-20 text-richblack-100">
         We couldn&apos;t find that category.{" "}
