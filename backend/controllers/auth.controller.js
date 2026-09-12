@@ -96,7 +96,9 @@ const sendOTP = asyncHandler(async (req,res) => {
 
 //regenerate access Token 
 const refreshAccessToken = asyncHandler(async (req,res) => {
-    const incomingRefreshToken = req.body.refreshToken || req.cookies.refreshToken
+    //same guard as verifyJwt: a request without a parsed body must fall through
+    //to the cookie rather than throwing
+    const incomingRefreshToken = req.body?.refreshToken || req.cookies?.refreshToken
 
     if(!incomingRefreshToken) {
         throw new apiError(401,"User not authorized");

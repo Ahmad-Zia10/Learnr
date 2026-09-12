@@ -7,13 +7,15 @@ import verify from "./verify.js";
 import people from "./phases/people.js";
 import catalog from "./phases/catalog.js";
 import reviews from "./phases/reviews.js";
+import orders from "./phases/orders.js";
 
 //Content modules are registered here as each phase lands. Order matters: a
 //phase may only reference documents an earlier phase created.
 const PHASES = [
     people,
     catalog,
-    reviews
+    reviews,
+    orders
 ];
 
 const label = (text) => `\n${text}\n${"-".repeat(text.length)}`;
