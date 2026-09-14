@@ -35,6 +35,19 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
 }
 
+//Cookie flags for the auth tokens. In production the frontend is served from a
+//different domain, and a cross-site cookie is only accepted when it is both
+//Secure and SameSite=None - the lax default would silently drop it.
+const cookieOptions = () => {
+    const isProduction = process.env.NODE_ENV === "production";
+
+    return {
+        httpOnly : true,
+        secure : isProduction,
+        sameSite : isProduction ? "none" : "lax"
+    };
+}
+
 //send OTP
 const sendOTP = asyncHandler(async (req,res) => {
     const {email} = req.body;
@@ -96,7 +109,9 @@ const sendOTP = asyncHandler(async (req,res) => {
 
 //regenerate access Token 
 const refreshAccessToken = asyncHandler(async (req,res) => {
-    const incomingRefreshToken = req.body.refreshToken || req.cookies.refreshToken
+    //same guard as verifyJwt: a request without a parsed body must fall through
+    //to the cookie rather than throwing
+    const incomingRefreshToken = req.body?.refreshToken || req.cookies?.refreshToken
 
     if(!incomingRefreshToken) {
         throw new apiError(401,"User not authorized");
@@ -118,10 +133,7 @@ const refreshAccessToken = asyncHandler(async (req,res) => {
             throw new apiError(401,"Invalid Refresh Token")
         }
 
-        const options = {
-            httpOnly : true,
-            secure : process.env.NODE_ENV === "production"
-        }
+        const options = cookieOptions();
 
         const {accessToken, refreshToken : newRefreshToken} = await generateAccessAndRefreshTokens(user._id);
 
@@ -262,10 +274,7 @@ const loginUser = asyncHandler(async (req,res) => {
         throw new apiError(500, "User could not be logged In");
     }
 
-    const options = {
-        httpOnly : true,
-        secure : process.env.NODE_ENV === "production"
-    }
+    const options = cookieOptions();
 
     return res
     .status(200)

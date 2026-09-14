@@ -2,12 +2,13 @@
 // Vite proxies /api/v1 -> http://localhost:4000 in development.
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { API_BASE } from './apiBase';
 
 export const authApi = createApi({
   reducerPath: "authApi",
 
   baseQuery: fetchBaseQuery({
-    baseUrl: "/api/v1/users/",
+    baseUrl: `${API_BASE}/api/v1/users/`,
     //send the httpOnly access/refresh cookies the backend sets on login
     credentials: "include",
   }),

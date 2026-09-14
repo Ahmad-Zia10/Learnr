@@ -1,12 +1,13 @@
 // Payment endpoints (backend mounts these under /api/v1/payment)
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { API_BASE } from './apiBase';
 
 export const paymentApi = createApi({
   reducerPath: "paymentApi",
 
   baseQuery: fetchBaseQuery({
-    baseUrl: "/api/v1/payment/",
+    baseUrl: `${API_BASE}/api/v1/payment/`,
     credentials: "include",
     prepareHeaders: (headers, { getState }) => {
       //the backend also accepts the access token as a bearer header

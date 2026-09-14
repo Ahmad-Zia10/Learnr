@@ -7,19 +7,32 @@ import verify from "./verify.js";
 import people from "./phases/people.js";
 import catalog from "./phases/catalog.js";
 import reviews from "./phases/reviews.js";
+import orders from "./phases/orders.js";
 
 //Content modules are registered here as each phase lands. Order matters: a
 //phase may only reference documents an earlier phase created.
 const PHASES = [
     people,
     catalog,
-    reviews
+    reviews,
+    orders
 ];
 
 const label = (text) => `\n${text}\n${"-".repeat(text.length)}`;
 
 const run = async () => {
     const verifyOnly = process.argv.includes("--verify");
+
+    //Seeding destroys every user, course and order it owns. Running it against
+    //a live database would delete real customers, so it refuses outright unless
+    //the operator says explicitly that they mean it.
+    if(!verifyOnly && process.env.NODE_ENV === "production" && !process.argv.includes("--i-know-this-wipes-production")) {
+        console.error("Refusing to seed: NODE_ENV is production.");
+        console.error("This deletes all users, courses, reviews and orders.");
+        console.error("Re-run with --i-know-this-wipes-production if that is genuinely what you want.");
+        process.exitCode = 1;
+        return;
+    }
 
     const connection = await connect();
     console.log(`Connected to ${connection.name} on ${connection.host}`);

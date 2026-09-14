@@ -7,7 +7,12 @@ import asyncHandler from "../utils/asyncHandler.js";
 
 const verifyJwt = asyncHandler(async (req, __, next) => {
 
-        const token = req.cookies.accessToken || req.body.accessToken || req.header("Authorization")?.replace("Bearer ","");
+        //Express 5 leaves req.body undefined on requests without a parsed body,
+        //so a GET reaching this line used to throw before the Authorization
+        //header was ever read - breaking every authenticated GET.
+        const token = req.cookies?.accessToken
+            || req.body?.accessToken
+            || req.header("Authorization")?.replace("Bearer ","");
 
         if(!token) {
             throw new apiError(401, "Unauthorized");

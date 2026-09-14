@@ -1,0 +1,52 @@
+services:
+  - type: web
+    name: studynotion-api
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    # GET / returns {"status":"ok"} without touching the database
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Render injects PORT; index.js reads it and falls back to 4000 locally.
+      # Everything below is deliberately left unset - fill these in through the
+      # Render dashboard so no secret is ever committed to the repository.
+      - key: MONGODB_URL
+        sync: false
+      - key: ACCESS_TOKEN_SECRET
+        sync: false
+      - key: ACCESS_TOKEN_EXPIRY
+        sync: false
+      - key: REFRESH_TOKEN_SECRET
+        sync: false
+      - key: REFRESH_TOKEN_EXPIRY
+        sync: false
+      # Comma-separated list of frontend origins allowed to call this API.
+      - key: CORS_ORIGIN
+        sync: false
+      # Used to build the password-reset link that is emailed to users.
+      - key: FRONTEND_URL
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_CLOUD_API_KEY
+        sync: false
+      - key: CLOUDINARY_CLOUD_API_SECRET
+        sync: false
+      - key: RAZORPAY_KEY
+        sync: false
+      - key: RAZORPAY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: MAIL_HOST
+        sync: false
+      - key: MAIL_USER
+        sync: false
+      - key: MAIL_PASS
+        sync: false
+      - key: CONTACT_MAIL_TO
+        sync: false

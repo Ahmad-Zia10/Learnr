@@ -1,16 +1,39 @@
 import express from "express"
 import cors from "cors"
 import { errorHandler } from "./middleware/error.middleware.js";
+import apiError from "./utils/apiError.js";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv"
 dotenv.config();
 
 const app = express();
 
-// app.use(cors({
-//     origin : process.env.CORS_ORIGIN,//requests coming only from CORS_ORIGIN are going to be entertained.
-//     credentials : true
-// }))
+//In development the Vite proxy makes every request same-origin, so this is
+//inert. In production the frontend is served from its own domain and every
+//call is cross-origin, so without this the whole API is unreachable.
+//
+//CORS_ORIGIN accepts a comma-separated list, because staging and production
+//frontends often both need to reach the same API.
+const allowedOrigins = (process.env.CORS_ORIGIN ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+app.use(cors({
+    origin : (origin, callback) => {
+        //server-to-server callers (Razorpay webhooks, health checks, curl) send
+        //no Origin header at all and must not be blocked
+        if(!origin) return callback(null, true);
+
+        if(allowedOrigins.includes(origin)) return callback(null, true);
+
+        //Refused as a client error by the error middleware, which is what a
+        //request from an unapproved origin is.
+        return callback(new apiError(403, `Origin ${origin} is not allowed by CORS`));
+    },
+    //the refresh token travels as an httpOnly cookie
+    credentials : true
+}))
 
 //common middleware
 app.use(express.json({limit:"16kb"}));//Allows your server to understand JSON data sent in requests (like from APIs or frontend).The limit:"16kb" just means request body size cannot be larger than 16kb.
