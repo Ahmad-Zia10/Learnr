@@ -1,13 +1,14 @@
 // Course + category endpoints (backend mounts these under /api/v1/courses)
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { API_BASE } from './apiBase';
 
 export const courseApi = createApi({
   reducerPath: "courseApi",
   tagTypes: ["CourseProgress", "FullCourse", "InstructorCourses"],
 
   baseQuery: fetchBaseQuery({
-    baseUrl: "/api/v1/courses/",
+    baseUrl: `${API_BASE}/api/v1/courses/`,
     credentials: "include",
     prepareHeaders: (headers, { getState }) => {
       const token = getState()?.auth?.token;

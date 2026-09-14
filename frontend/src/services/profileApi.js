@@ -1,13 +1,14 @@
 // Profile endpoints (backend mounts these under /api/v1/profile)
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { API_BASE } from './apiBase';
 
 export const profileApi = createApi({
   reducerPath: "profileApi",
   tagTypes: ["Profile", "EnrolledCourses"],
 
   baseQuery: fetchBaseQuery({
-    baseUrl: "/api/v1/",
+    baseUrl: `${API_BASE}/api/v1/`,
     credentials: "include",
     prepareHeaders: (headers, { getState }) => {
       const token = getState()?.auth?.token;

@@ -185,9 +185,13 @@ const verifySignature = asyncHandler( async (req,res) => {
         throw new apiError(400, "Missing webhook signature")
     }
 
+    //this route is mounted with a raw body parser, so req.body is the exact
+    //buffer Razorpay signed
+    const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body ?? {}));
+
     const digest = crypto
         .createHmac("sha256", webhookSecret)
-        .update(JSON.stringify(req.body))
+        .update(rawBody)
         .digest("hex");
 
     const signatureIsValid =
@@ -198,7 +202,15 @@ const verifySignature = asyncHandler( async (req,res) => {
         throw new apiError(400, "Invalid Payment Request")
     }
 
-    const entity = req.body?.payload?.payment?.entity;
+    //only parse once the signature proves the payload came from Razorpay
+    let payload;
+    try {
+        payload = JSON.parse(rawBody.toString("utf8"));
+    } catch {
+        throw new apiError(400, "Webhook payload is not valid JSON")
+    }
+
+    const entity = payload?.payload?.payment?.entity;
     const razorpayOrderId = entity?.order_id;
 
     if(!razorpayOrderId) {
